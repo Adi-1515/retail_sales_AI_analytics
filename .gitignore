@@ -21,13 +21,6 @@ ENV/
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
-# Generated outputs (reproducible from pipeline)
-data/processed/*.parquet
-data/processed/*.db
-outputs/figures/*.png
-outputs/figures/*.jpg
-outputs/reports/*.md
-
 # IDE
 .vscode/
 .idea/
