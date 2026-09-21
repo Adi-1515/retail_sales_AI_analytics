@@ -21,11 +21,6 @@ ENV/
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
-# Dataset (large binary files - see README for download instructions)
-data/raw/*.xls
-data/raw/*.xlsx
-data/raw/*.csv
-
 # Generated outputs (reproducible from pipeline)
 data/processed/*.parquet
 data/processed/*.db
