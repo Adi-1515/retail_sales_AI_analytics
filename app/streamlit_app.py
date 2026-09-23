@@ -292,7 +292,7 @@ def chart_card(fig: go.Figure, title: str, height: int = 300) -> None:
         unsafe_allow_html=True,
     )
     _style_chart(fig, height)
-    st.plotly_chart(fig, use_container_width=True,
+    st.plotly_chart(fig, width="stretch",
                     config={"displayModeBar": False, "responsive": True})
     st.markdown("</div>", unsafe_allow_html=True)
     # CSS: zero out the default Streamlit element gap inside cards
@@ -349,12 +349,35 @@ def _style_chart(fig: go.Figure, height: int) -> None:
 
 def render_table(df: pd.DataFrame, col_fmt: dict | None = None,
                  height: int = 380) -> None:
-    reset = df.reset_index(drop=True)
+    reset = df.reset_index(drop=True).copy()
     if col_fmt:
-        styled = reset.style.format(col_fmt).hide(axis="index")
-        st.dataframe(styled, width="stretch", height=height)
-    else:
-        st.dataframe(reset, width="stretch", height=height, hide_index=True)
+        for col, fmt in col_fmt.items():
+            if col in reset.columns:
+                reset[col] = reset[col].apply(lambda x: fmt.format(x) if pd.notnull(x) else x)
+                
+    # Custom HTML table to bypass Streamlit Canvas WebGL bugs on Windows
+    th_style = f"padding:10px; font-weight:600; color:{MUTED}; text-transform:uppercase; letter-spacing:0.05em; position:sticky; top:0; background:{CARD2}; border-bottom:1px solid {BORDER}; z-index:1;"
+    
+    html = f"""
+    <div style="height:{height}px; overflow-y:auto; background:{CARD}; border:1px solid {BORDER}; border-radius:5px;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px; color:{TEXT}; text-align:left;">
+            <thead>
+                <tr>
+                    {"".join(f'<th style="{th_style}">{c}</th>' for c in reset.columns)}
+                </tr>
+            </thead>
+            <tbody>
+                {"".join(
+                    f'<tr style="border-bottom:1px solid {BORDER};">' + 
+                    "".join(f'<td style="padding:10px;">{val}</td>' for val in row) +
+                    '</tr>'
+                    for row in reset.itertuples(index=False)
+                )}
+            </tbody>
+        </table>
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
 
 
 def spacer(px: int = 8) -> None:
@@ -435,7 +458,7 @@ def render_sidebar(df: pd.DataFrame) -> tuple[str, pd.DataFrame]:
                                           placeholder="All segments", key="f_seg")
 
         spacer(4)
-        if st.button("Reset Filters", use_container_width=True, type="secondary"):
+        if st.button("Reset Filters", width="stretch", type="secondary"):
             for k in ("f_year", "f_region", "f_cat", "f_seg"):
                 st.session_state.pop(k, None)
             st.rerun()
@@ -816,18 +839,12 @@ def page_products(df: pd.DataFrame) -> None:
     sub_tbl["Margin_%"] = (sub_tbl["Profit_Margin"] * 100).round(1)
     sub_tbl = sub_tbl.drop(columns=["Profit_Margin"]).sort_values("Profit")
 
-    def _cp(v):
-        return f"color: {RED}" if isinstance(v, (int, float)) and v < 0 else ""
+    disp_df = sub_tbl[["Category","Sub_Category","Sales","Profit","Margin_%","Quantity"]].copy()
+    fmts = {"Sales":"${:,.0f}", "Profit":"${:,.0f}", "Margin_%":"{:.1f}%", "Quantity":"{:,}"}
+    for col, fmt in fmts.items():
+        disp_df[col] = disp_df[col].apply(lambda x: fmt.format(x) if pd.notnull(x) else x)
 
-    styled = (
-        sub_tbl[["Category","Sub_Category","Sales","Profit","Margin_%","Quantity"]]
-        .style
-        .format({"Sales":"${:,.0f}", "Profit":"${:,.0f}",
-                 "Margin_%":"{:.1f}%", "Quantity":"{:,}"})
-        .map(_cp, subset=["Profit","Margin_%"])
-        .hide(axis="index")
-    )
-    st.dataframe(styled, width="stretch", height=360)
+    render_table(disp_df, height=360)
 
 
 # ─── Page 4: Sales Prediction ─────────────────────────────────────────────────
@@ -850,9 +867,9 @@ def page_forecast(df: pd.DataFrame) -> None:
     best_row = m_df.iloc[0]
 
     kpi_row([
-        {"label": "Best Model",      "value": best},
-        {"label": "MAE",             "value": fmt_currency(best_row["MAE"])},
-        {"label": "RMSE",            "value": fmt_currency(best_row["RMSE"])},
+        {"label": "Best Model",      "value": best.replace(" Regression", " Reg.")},
+        {"label": "MAE",             "value": f"{best_row['MAE']:,.0f}"},
+        {"label": "RMSE",            "value": f"{best_row['RMSE']:,.0f}"},
         {"label": "R²",              "value": f"{best_row['R2']:.3f}"},
         {"label": "Train Months",    "value": str(len(train))},
         {"label": "Test Months",     "value": str(len(test))},
@@ -927,7 +944,7 @@ def page_forecast(df: pd.DataFrame) -> None:
     render_table(
         m_df[["model","MAE","RMSE","R2"]].rename(
             columns={"model":"Model","R2":"R²"}),
-        {"MAE":"${:,.0f}", "RMSE":"${:,.0f}", "R²":"{:.4f}"},
+        {"MAE":"{:,.0f}", "RMSE":"{:,.0f}", "R²":"{:.4f}"},
         height=148,
     )
 
@@ -1024,7 +1041,7 @@ def page_ai_insights(df: pd.DataFrame) -> None:
     col_btn, col_note = st.columns([1, 4], gap="small")
     with col_btn:
         run_ai = st.button("Generate Insights", type="primary",
-                           use_container_width=True)
+                           width="stretch")
     with col_note:
         st.markdown(
             f'<div style="font-size:11px;color:{MUTED};padding-top:10px">'
