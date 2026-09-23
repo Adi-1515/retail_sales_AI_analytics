@@ -350,9 +350,11 @@ def _style_chart(fig: go.Figure, height: int) -> None:
 def render_table(df: pd.DataFrame, col_fmt: dict | None = None,
                  height: int = 380) -> None:
     reset = df.reset_index(drop=True)
-    styled = reset.style.format(col_fmt) if col_fmt else reset
-    st.dataframe(styled, use_container_width=True,
-                 height=height, hide_index=True)
+    if col_fmt:
+        styled = reset.style.format(col_fmt).hide(axis="index")
+        st.dataframe(styled, width="stretch", height=height)
+    else:
+        st.dataframe(reset, width="stretch", height=height, hide_index=True)
 
 
 def spacer(px: int = 8) -> None:
@@ -823,8 +825,9 @@ def page_products(df: pd.DataFrame) -> None:
         .format({"Sales":"${:,.0f}", "Profit":"${:,.0f}",
                  "Margin_%":"{:.1f}%", "Quantity":"{:,}"})
         .map(_cp, subset=["Profit","Margin_%"])
+        .hide(axis="index")
     )
-    st.dataframe(styled, use_container_width=True, height=360, hide_index=True)
+    st.dataframe(styled, width="stretch", height=360)
 
 
 # ─── Page 4: Sales Prediction ─────────────────────────────────────────────────
