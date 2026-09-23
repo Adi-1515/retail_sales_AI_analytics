@@ -83,7 +83,8 @@ def clean_orders(df: pd.DataFrame) -> pd.DataFrame:
     # ------------------------------------------------------------------
     for date_col in ("Order_Date", "Ship_Date"):
         if date_col in df.columns and not pd.api.types.is_datetime64_any_dtype(df[date_col]):
-            df[date_col] = pd.to_datetime(df[date_col], infer_format=True, errors="coerce")
+            # infer_format was removed in pandas 3.x; pandas now always infers automatically
+            df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
 
     # ------------------------------------------------------------------
     # 3. Strip leading/trailing whitespace from all string columns

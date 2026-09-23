@@ -151,8 +151,11 @@ def profitability_by_subcategory(df: pd.DataFrame) -> pd.DataFrame:
 
 def discount_profit_analysis(df: pd.DataFrame) -> pd.DataFrame:
     """Bin orders by discount range and show avg profit margin."""
+    # Bins are right=False (left-inclusive).  The dataset has no discounts in
+    # the (0%, 10%) range, so the "1-9%" bin is always empty but is retained for
+    # correctness.  The "10-20%" label reflects the actual [0.1, 0.2) interval.
     bins = [0, 0.001, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.01]
-    labels = ["0%", "1-10%", "11-20%", "21-30%", "31-40%", "41-50%", "51-60%", "61-80%", ">80%"]
+    labels = ["0%", "1-9%", "10-20%", "21-30%", "31-40%", "41-50%", "51-60%", "61-80%", ">80%"]
     d = df.copy()
     d["Discount_Bin"] = pd.cut(d["Discount"], bins=bins, labels=labels, right=False)
     return (

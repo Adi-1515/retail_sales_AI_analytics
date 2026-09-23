@@ -343,13 +343,30 @@ Feature: single numeric time index (months since dataset start).
 
 ---
 
+## Deployment (Streamlit Cloud)
+
+To deploy this application to [Streamlit Community Cloud](https://streamlit.io/cloud):
+
+1. Push the repository to GitHub (ensure the dataset file is committed to `data/raw/`).
+2. Go to [share.streamlit.io](https://share.streamlit.io) and connect your GitHub account.
+3. Select the repository, branch (`main`), and entry point (`app/streamlit_app.py`).
+4. The dataset (`data/raw/sample_-_superstore.xls`) must be present in the repository for the deployed app to work. It is included because it is sample/demo data from Tableau Public.
+5. No API keys or secrets are required for the default (template) AI mode.
+
+**If using IBM Granite (optional)**:
+
+- Do not commit API keys or model credentials to the repository.
+- If using Streamlit secrets, add them via the Streamlit Cloud dashboard under **App > Settings > Secrets**.
+- Reference secrets via `st.secrets["YOUR_KEY"]` — never hardcode them.
+
+---
+
 ## Future Improvements
 
 - Integrate returns data to compute true net profitability.
 - Add explicit seasonality features (month-of-year dummies) to forecasting.
 - Extend RFM to a formal CLV (Customer Lifetime Value) model.
 - Add a SHAP-based feature importance analysis for the Random Forest model.
-- Deploy the Streamlit app to Streamlit Cloud for shareable access.
 - Add automated report generation (PDF export from the dashboard).
 
 ---
